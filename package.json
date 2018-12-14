@@ -1,0 +1,23 @@
+{
+  "name": "tgvmax-notifier",
+  "version": "1.0.0",
+  "author": "Vincent Timofti",
+  "license": "MIT",
+  "description": "TGVMax Notifier",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vince91/tgvmax-notifier.git"
+  },
+  "scripts": {
+    "dev": "nodemon src",
+    "start": "node src"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "express": "^4.17.1",
+    "he": "^1.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1"
+  }
+}
