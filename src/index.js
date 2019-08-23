@@ -1,16 +1,22 @@
 const express = require("express");
 const sncf = require("./sncf");
 const app = express();
+const moment = require("moment");
 
 let origins;
 let destinations;
 let jobs = [];
 let lastId = 0;
 
+const SCHEDULER_INTERVAL = 1000;
+const JOB_INTERVAL = 60000;
+
 app.use(express.json());
 
 app.listen(3000, async () => {
   console.log("Server running on port 3000");
+
+  setInterval(scheduler, SCHEDULER_INTERVAL);
 
   origins = await sncf.getAllOrigins();
   destinations = await sncf.getAllDestinations();
@@ -45,11 +51,20 @@ app.post("/jobs", function(req, res) {
     return res.sendStatus(422);
   }
 
-  jobs.push({ id: ++lastId, origin, destination, date });
-  res.sendStatus(201);
+  const id = ++lastId;
+  jobs.push({
+    id,
+    origin,
+    destination,
+    date,
+    lastChecked: null,
+    checking: false
+  });
   console.log(
-    `Added job: ${origin} -> ${destination} on ${date} (id: ${lastId})`
+    "Added job: " +
+      jobToString({ origin, destination, date, id, lastChecked: null })
   );
+  res.sendStatus(201);
 });
 
 app.delete("/jobs/:id", function(req, res) {
@@ -59,11 +74,29 @@ app.delete("/jobs/:id", function(req, res) {
     return res.sendStatus(404);
   }
 
-  const { origin, destination, date, id } = jobs[index];
-  console.log(
-    `Deleted job: ${origin} -> ${destination} on ${date} (id: ${id})`
-  );
+  console.log("Deleted job: " + jobToString(jobs[index]));
 
   jobs.splice(index, 1);
   res.sendStatus(200);
 });
+
+function jobToString({ origin, destination, date, id, lastChecked }) {
+  return `${origin} -> ${destination} on ${date} (id: ${id}, lastedChecked: ${
+    lastChecked ? moment(lastChecked).format("YYYY-MM-DD HH:mm") : "N/A"
+  })`;
+}
+
+function scheduler() {
+  const now = new Date();
+
+  for (const job of jobs) {
+    const jobTime = new Date(job.lastChecked).getTime();
+
+    if (!jobTime || (jobTime + JOB_INTERVAL < now.getTime() && !job.checking)) {
+      job.checking = true;
+      console.log("Checking: ", jobToString(job));
+      job.lastChecked = new Date().toISOString();
+      job.checking = false;
+    }
+  }
+}
