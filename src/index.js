@@ -8,15 +8,12 @@ let destinations;
 let jobs = [];
 let lastId = 0;
 
-const SCHEDULER_INTERVAL = 1000;
-const JOB_INTERVAL = 60000;
-
 app.use(express.json());
 
 app.listen(3000, async () => {
   console.log("Server running on port 3000");
 
-  setInterval(scheduler, SCHEDULER_INTERVAL);
+  setInterval(scheduler, 1000);
 
   origins = await sncf.getAllOrigins();
   destinations = await sncf.getAllDestinations();
@@ -86,16 +83,32 @@ function jobToString({ origin, destination, date, id, lastChecked }) {
   })`;
 }
 
-function scheduler() {
-  const now = new Date();
-
+async function scheduler() {
   for (const job of jobs) {
-    const jobTime = new Date(job.lastChecked).getTime();
+    const { lastChecked } = job;
 
-    if (!jobTime || (jobTime + JOB_INTERVAL < now.getTime() && !job.checking)) {
+    if (
+      (!lastChecked ||
+        moment(lastChecked)
+          .add(60, "second")
+          .isBefore()) &&
+      !job.checking
+    ) {
       job.checking = true;
-      console.log("Checking: ", jobToString(job));
-      job.lastChecked = new Date().toISOString();
+      const availability = await sncf.getAvailability(
+        job.origin,
+        job.destination,
+        job.date
+      );
+
+      console.log(
+        availability.length ? "✅" : "❌",
+        "Checked job: ",
+        jobToString(job),
+        availability.length + " trains available"
+      );
+
+      job.lastChecked = moment().format();
       job.checking = false;
     }
   }
