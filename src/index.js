@@ -1,5 +1,6 @@
 const express = require("express");
 const sncf = require("./sncf");
+const messenger = require("./messenger");
 const app = express();
 const moment = require("moment");
 
@@ -78,7 +79,7 @@ app.delete("/jobs/:id", function(req, res) {
 });
 
 function jobToString({ origin, destination, date, id, lastChecked }) {
-  return `${origin} -> ${destination} on ${date} (id: ${id}, lastedChecked: ${
+  return `${origin} -> ${destination} on ${date} (id: ${id}, lastChecked: ${
     lastChecked ? moment(lastChecked).format("YYYY-MM-DD HH:mm") : "N/A"
   })`;
 }
@@ -100,6 +101,14 @@ async function scheduler() {
         job.destination,
         job.date
       );
+
+      if (availability.length > 0) {
+        messenger.sendUpdate(
+          `Train available! ${job.origin} -> ${job.destination} on ${
+            job.date
+          }: ${availability.join(", ")}`
+        );
+      }
 
       console.log(
         availability.length ? "✅" : "❌",
