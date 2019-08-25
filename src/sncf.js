@@ -3,7 +3,7 @@ const he = require("he");
 const moment = require("moment");
 
 let axiosInstance = axios.create();
-let token; // = "BR5Ikd7ineJcw7VYFr4y3Q==";
+let token;
 let tokenPromise;
 
 const SIMULATOR_URL = "https://simulateur.tgvmax.fr/VSC/";
