@@ -65,10 +65,12 @@ async function getAvailability(origin, destination, date) {
       }
     });
 
-    beginDate = moment(data[data.length - 1].departureDateTime).add(
-      1,
-      "minute"
-    );
+    if (data.length) {
+      beginDate = moment(data[data.length - 1].departureDateTime).add(
+        1,
+        "minute"
+      );
+    }
   } while (data.length >= 6 && beginDate.isBefore(endDate));
 
   return availability;

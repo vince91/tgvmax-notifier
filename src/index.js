@@ -44,7 +44,8 @@ app.post("/jobs", function(req, res) {
     !destination ||
     !date ||
     !origins.includes(origin) ||
-    !destinations.includes(destination)
+    !destinations.includes(destination) ||
+    moment(date).isBefore(moment().startOf("day"))
   ) {
     return res.sendStatus(422);
   }
@@ -84,41 +85,46 @@ function jobToString({ origin, destination, date, id, lastChecked }) {
   })`;
 }
 
-async function scheduler() {
-  for (const job of jobs) {
-    const { lastChecked } = job;
+async function checkJob(job) {
+  const { id, lastChecked, checking, origin, destination, date } = job;
 
-    if (
-      (!lastChecked ||
-        moment(lastChecked)
-          .add(60, "second")
-          .isBefore()) &&
-      !job.checking
-    ) {
-      job.checking = true;
-      const availability = await sncf.getAvailability(
-        job.origin,
-        job.destination,
-        job.date
+  if (
+    (!lastChecked ||
+      moment(lastChecked)
+        .add(60, "second")
+        .isBefore()) &&
+    !checking
+  ) {
+    job.checking = true;
+    const availability = await sncf.getAvailability(origin, destination, date);
+
+    console.log(
+      availability.length ? "✅" : "❌",
+      "Checked job: ",
+      jobToString(job),
+      availability.length + " trains available"
+    );
+
+    if (availability.length > 0) {
+      messenger.sendUpdate(
+        `Train available! ${origin} -> ${destination} on ${date}: ${availability.join(
+          ", "
+        )}`
       );
 
-      if (availability.length > 0) {
-        messenger.sendUpdate(
-          `Train available! ${job.origin} -> ${job.destination} on ${
-            job.date
-          }: ${availability.join(", ")}`
-        );
-      }
-
-      console.log(
-        availability.length ? "✅" : "❌",
-        "Checked job: ",
-        jobToString(job),
-        availability.length + " trains available"
-      );
-
+      jobs.splice(jobs.findIndex(job => job.id === id), 1);
+    } else {
       job.lastChecked = moment().format();
       job.checking = false;
     }
   }
+}
+
+async function scheduler() {
+  // Remove passed jobs
+  jobs = jobs.filter(job =>
+    moment(job.date).isSameOrAfter(moment().startOf("day"))
+  );
+
+  jobs.forEach(checkJob);
 }
