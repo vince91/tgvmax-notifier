@@ -9,8 +9,9 @@
     "url": "https://github.com/vince91/tgvmax-notifier.git"
   },
   "scripts": {
-    "dev": "nodemon src",
-    "start": "node src"
+    "dev": "tsc --watch",
+    "nodemon": "nodemon --watch dist dist",
+    "start": "tsc && node dist"
   },
   "dependencies": {
     "axios": "^0.19.0",
@@ -20,6 +21,10 @@
     "moment": "^2.24.0"
   },
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "@types/express": "^4.17.1",
+    "@types/he": "^1.1.0",
+    "@types/node": "^12.7.2",
+    "nodemon": "^1.19.1",
+    "typescript": "^3.5.3"
   }
 }

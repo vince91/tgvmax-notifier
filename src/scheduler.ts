@@ -1,10 +1,10 @@
-const moment = require("moment");
-const { sendUpdate } = require("./messenger");
-const { getAvailability } = require("./sncf");
-const data = require("./data");
-const { jobToString } = require("./utils");
+import * as moment from "moment";
+import { sendUpdate } from "./messenger";
+import { getAvailability } from "./sncf";
+import data from "./data";
+import { jobToString } from "./utils";
 
-function scheduler() {
+export default function scheduler() {
   // Remove passed jobs
   data.jobs = data.jobs.filter(job =>
     moment(job.date).isSameOrAfter(moment().startOf("day"))
@@ -13,7 +13,7 @@ function scheduler() {
   data.jobs.forEach(checkJob);
 }
 
-async function checkJob(job) {
+async function checkJob(job: Job) {
   const { id, lastChecked, checking, origin, destination, date } = job;
   const shouldCheck =
     !checking &&
@@ -47,5 +47,3 @@ async function checkJob(job) {
     }
   }
 }
-
-module.exports = scheduler;

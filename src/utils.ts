@@ -1,9 +1,13 @@
-const moment = require("moment");
+import * as moment from "moment";
 
-function jobToString({ origin, destination, date, id, lastChecked }) {
+export function jobToString({
+  origin,
+  destination,
+  date,
+  id,
+  lastChecked
+}: Job): string {
   return `${origin} -> ${destination} on ${date} (id: ${id}, lastChecked: ${
     lastChecked ? moment(lastChecked).format("YYYY-MM-DD HH:mm") : "N/A"
   })`;
 }
-
-module.exports = { jobToString };

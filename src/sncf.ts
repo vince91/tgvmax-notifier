@@ -1,10 +1,10 @@
-const axios = require("axios");
-const he = require("he");
-const moment = require("moment");
+import axios from "axios";
+import * as he from "he";
+import * as moment from "moment";
 
 let axiosInstance = axios.create();
-let token;
-let tokenPromise;
+let token: string;
+let tokenPromise: Promise<void>;
 
 const SIMULATOR_URL = "https://simulateur.tgvmax.fr/VSC/";
 const API_URL = "https://sncf-simulateur-api-prod.azurewebsites.net/api";
@@ -26,30 +26,34 @@ async function checkToken() {
 
 async function getToken() {
   const { data } = await axios(SIMULATOR_URL);
-  const inputs = data.match(/<input(?:.*)\/>/g);
+  const inputs = (data as string).match(/<input(?:.*)\/>/g);
   const tokenInput = inputs.find(input => input.includes("hiddenToken"));
   token = he.decode(tokenInput.match(/value="(.*)"/)[1]);
   console.log("TGVmax token:", token);
   axiosInstance.defaults.headers.common.ValidityToken = token;
 }
 
-async function getAllOrigins() {
+export async function getAllOrigins() {
   await checkToken();
   const { data } = await axiosInstance(ORIGIN_URL);
   return data;
 }
 
-async function getAllDestinations() {
+export async function getAllDestinations() {
   await checkToken();
   const { data } = await axiosInstance(DESTINATION_URL);
   return data;
 }
 
-async function getAvailability(origin, destination, date) {
+export async function getAvailability(
+  origin: string,
+  destination: string,
+  date: string
+) {
   await checkToken();
   let beginDate = moment(date).startOf("day");
   const endDate = moment(date).endOf("day");
-  const availability = [];
+  const availability: string[] = [];
   let data;
 
   do {
@@ -59,7 +63,7 @@ async function getAvailability(origin, destination, date) {
 
     ({ data } = await axiosInstance(url));
 
-    data.forEach(train => {
+    data.forEach((train: any) => {
       if (train.availableSeatsCount > 0) {
         availability.push(moment(train.departureDateTime).format("HH:mm"));
       }
@@ -75,5 +79,3 @@ async function getAvailability(origin, destination, date) {
 
   return availability;
 }
-
-module.exports = { getAllOrigins, getAllDestinations, getAvailability };

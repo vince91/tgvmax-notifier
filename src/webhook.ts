@@ -1,12 +1,13 @@
-const data = require("./data");
-const { webhookToken } = require("../config");
-const parseMessage = require("./messageParser");
+import data from "./data";
+import parseMessage from "./messageParser";
+import { Request, Response } from "express";
+const { webhookToken } = require("../config.json");
 
-function post(req, res) {
+export function post(req: Request, res: Response) {
   const { body } = req;
 
   if (body.object === "page") {
-    body.entry.forEach(function(entry) {
+    body.entry.forEach(function(entry: any) {
       console.log("\nReceived message:\n", JSON.stringify(entry, null, 2));
 
       const {
@@ -24,7 +25,7 @@ function post(req, res) {
   }
 }
 
-function get(req, res) {
+export function get(req: Request, res: Response) {
   let mode = req.query["hub.mode"];
   let token = req.query["hub.verify_token"];
   let challenge = req.query["hub.challenge"];
@@ -37,5 +38,3 @@ function get(req, res) {
     }
   }
 }
-
-module.exports = { post, get };

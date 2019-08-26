@@ -1,8 +1,8 @@
-const { sendResponse } = require("./messenger");
-const moment = require("moment");
-const Fuse = require("fuse.js");
-const data = require("./data");
-const { jobToString } = require("./utils");
+import { sendResponse } from "./messenger";
+import * as moment from "moment";
+import * as Fuse from "fuse.js";
+import data from "./data";
+import { jobToString } from "./utils";
 
 const CREATE_REGEX = /create (.*)-(.*)(\d\d\/\d\d\/\d\d\d\d)/im;
 const DELETE_REGEX = /delete(?:\s)*(\d*)/im;
@@ -17,8 +17,9 @@ const options = {
   minMatchCharLength: 1
 };
 
-function parseMessage(message) {
+export default function parseMessage(message: string) {
   if (CREATE_REGEX.test(message)) {
+    const { origins, destinations } = data;
     const [, origin, destination, date] = CREATE_REGEX.exec(message);
 
     if (moment(date, "DD/MM/YYYY").isBefore(moment().startOf("day"))) {
@@ -38,10 +39,10 @@ function parseMessage(message) {
       return sendResponse("Invalid destination");
     }
 
-    const job = {
+    const job: Job = {
       id: ++data.lastId,
-      origin: origins[originResult[0]],
-      destination: destinations[destinationResult[0]],
+      origin: origins[Number(originResult[0])],
+      destination: destinations[Number(destinationResult[0])],
       date: moment(date, "DD/MM/YYYY").format("YYYY-MM-DD"),
       lastChecked: null,
       checking: false
@@ -81,5 +82,3 @@ function parseMessage(message) {
     );
   }
 }
-
-module.exports = parseMessage;
