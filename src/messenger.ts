@@ -1,11 +1,11 @@
 import data from "./data";
 import axios from "axios";
-import * as moment from 'moment';
+import * as moment from "moment";
 const { pageAccessToken } = require("../config.json");
 
 const MESSAGE_URL = "https://graph.facebook.com/v4.0/me/messages";
 
-function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
+async function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
   const url = MESSAGE_URL + "?access_token=" + pageAccessToken;
   const body = {
     messaging_type,
@@ -19,13 +19,18 @@ function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
 
   data.lastSent = moment();
 
-  return axios.post(url, body);
+  try {
+    await axios.post(url, body);
+  } catch ({ response }) {
+    console.error("\nCould not send message:", text);
+    console.error(response.status, response.data);
+  }
 }
 
 export function sendUpdate(text: string) {
-  return send(text, "UPDATE");
+  send(text, "UPDATE");
 }
 
 export function sendResponse(text: string) {
-  return send(text, "RESPONSE");
+  send(text, "RESPONSE");
 }
