@@ -11,6 +11,11 @@ export default function scheduler() {
   );
 
   data.jobs.forEach(checkJob);
+
+  if (data.jobs.length && data.lastSent && moment(data.lastSent).add(15, 'hour').isBefore()) {
+    console.log('Sending update message to user');
+    sendUpdate('Still searching?');
+  }
 }
 
 async function checkJob(job: Job) {

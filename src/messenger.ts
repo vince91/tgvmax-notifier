@@ -1,5 +1,6 @@
 import data from "./data";
 import axios from "axios";
+import * as moment from 'moment';
 const { pageAccessToken } = require("../config.json");
 
 const MESSAGE_URL = "https://graph.facebook.com/v4.0/me/messages";
@@ -15,6 +16,8 @@ function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
       text
     }
   };
+
+  data.lastSent = moment();
 
   return axios.post(url, body);
 }
