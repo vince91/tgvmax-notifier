@@ -1,8 +1,15 @@
 import { sendResponse } from "./messenger";
 import * as moment from "moment";
 import * as Fuse from "fuse.js";
-import data from "./data";
 import { jobToString, log } from "./utils";
+import {
+  getOrigins,
+  getDestinations,
+  getNewId,
+  addJob,
+  getJobs,
+  removeJob
+} from "./data";
 
 const CREATE_REGEX = /create (.*)-(.*)(\d\d\/\d\d\/\d\d\d\d)/im;
 const DELETE_REGEX = /delete(?:\s)*(\d*)/im;
@@ -17,9 +24,10 @@ const options = {
   minMatchCharLength: 1
 };
 
-export default function parseMessage(message: string) {
+export default async function parseMessage(message: string) {
   if (CREATE_REGEX.test(message)) {
-    const { origins, destinations } = data;
+    const origins = getOrigins();
+    const destinations = getDestinations();
     const [, origin, destination, date] = CREATE_REGEX.exec(message);
 
     if (moment(date, "DD/MM/YYYY").isBefore(moment().startOf("day"))) {
@@ -40,15 +48,14 @@ export default function parseMessage(message: string) {
     }
 
     const job: Job = {
-      id: ++data.lastId,
+      id: await getNewId(),
       origin: origins[Number(originResult[0])],
       destination: destinations[Number(destinationResult[0])],
       date: moment(date, "DD/MM/YYYY").format("YYYY-MM-DD"),
-      lastChecked: null,
-      checking: false
+      lastChecked: null
     };
 
-    data.jobs.push(job);
+    await addJob(job);
 
     sendResponse(
       `🚄 Job #${job.id} created: ${job.origin} > ${job.destination} on ${date}`
@@ -58,20 +65,21 @@ export default function parseMessage(message: string) {
   } else if (DELETE_REGEX.test(message)) {
     const [, id] = DELETE_REGEX.exec(message);
 
-    const jobIndex = data.jobs.findIndex(job => job.id === Number(id));
+    const job = getJobs().find(job => job.id === Number(id));
 
-    if (jobIndex === -1) {
+    if (!job) {
       return sendResponse(`4️⃣0️⃣4️⃣ Job #${id} not found`);
     }
 
-    data.jobs.splice(jobIndex, 1);
+    await removeJob(job);
     sendResponse(`🚮 Deleted job #${id}`);
   } else if (STATUS_REGEX.test(message)) {
-    if (!data.jobs.length) {
+    const jobs = getJobs();
+    if (!jobs.length) {
       return sendResponse("No jobs running");
     }
     sendResponse(
-      data.jobs
+      jobs
         .map(
           job =>
             `#${job.id}: ${job.origin} > ${job.destination} ${moment(

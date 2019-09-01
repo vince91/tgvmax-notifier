@@ -1,7 +1,7 @@
-import data from "./data";
 import axios from "axios";
 import * as moment from "moment";
 import { logError } from "./utils";
+import { getUserPsid, setLastSent } from "./data";
 const { pageAccessToken } = require("../config.json");
 
 const MESSAGE_URL = "https://graph.facebook.com/v4.0/me/messages";
@@ -11,14 +11,14 @@ async function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
   const body = {
     messaging_type,
     recipient: {
-      id: data.userPsid
+      id: getUserPsid()
     },
     message: {
       text
     }
   };
 
-  data.lastSent = moment();
+  await setLastSent(moment().format());
 
   try {
     await axios.post(url, body);

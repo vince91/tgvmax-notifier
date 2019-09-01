@@ -1,54 +1,77 @@
 import * as moment from "moment";
 import { sendUpdate } from "./messenger";
 import { getAvailability } from "./sncf";
-import data from "./data";
-import { jobToString, log } from "./utils";
+import { jobToString, log, logError } from "./utils";
+import {
+  getJobs,
+  getLastSent,
+  setJobs,
+  removeJob,
+  setJobLastChecked
+} from "./data";
 
-export default function scheduler() {
+export default async function scheduler() {
   // Remove passed jobs
-  data.jobs = data.jobs.filter(job =>
+  const jobs = getJobs().filter(job =>
     moment(job.date).isSameOrAfter(moment().startOf("day"))
   );
 
-  data.jobs.forEach(checkJob);
+  await setJobs(jobs);
 
-  if (data.jobs.length && data.lastSent && moment(data.lastSent).add(15, 'hour').isBefore()) {
-    log('Sending update message to user');
-    sendUpdate('Still searching?');
+  jobs.forEach(checkJob);
+
+  const lastSent = getLastSent();
+  if (
+    jobs.length &&
+    lastSent &&
+    moment(lastSent)
+      .add(15, "hour")
+      .isBefore()
+  ) {
+    log("Sending update message to user");
+    sendUpdate("Still searching?");
   }
 }
 
-async function checkJob(job: Job) {
-  const { id, lastChecked, checking, origin, destination, date } = job;
+const checking = new Set<number>();
+
+async function checkJob(job: Readonly<Job>) {
+  const { lastChecked, origin, destination, date } = job;
   const shouldCheck =
-    !checking &&
+    !checking.has(job.id) &&
     (!lastChecked ||
       moment(lastChecked)
         .add(60, "second")
         .isBefore());
 
   if (shouldCheck) {
-    job.checking = true;
-    const availability = await getAvailability(origin, destination, date);
+    checking.add(job.id);
 
-    log(
-      availability.length ? "✅" : "❌",
-      "Checked job: ",
-      jobToString(job),
-      availability.length + " trains available"
-    );
+    try {
+      const availability = await getAvailability(origin, destination, date);
 
-    if (availability.length > 0) {
-      sendUpdate(
-        `Train available! ${origin} -> ${destination} on ${date}: ${availability.join(
-          ", "
-        )}`
+      log(
+        availability.length ? "✅" : "❌",
+        "Checked job: ",
+        jobToString(job),
+        availability.length + " trains available"
       );
 
-      data.jobs.splice(data.jobs.findIndex(job => job.id === id), 1);
-    } else {
-      job.lastChecked = moment().format();
-      job.checking = false;
+      if (availability.length > 0) {
+        sendUpdate(
+          `Train available! ${origin} -> ${destination} on ${date}: ${availability.join(
+            ", "
+          )}`
+        );
+
+        await removeJob(job);
+      } else {
+        await setJobLastChecked(job, moment().format());
+      }
+    } catch ({ response }) {
+      logError(response.status, response.data);
+    } finally {
+      checking.delete(job.id);
     }
   }
 }

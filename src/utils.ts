@@ -12,10 +12,10 @@ export function jobToString({
   })`;
 }
 
-export function log(...text: string[]) {
+export function log(...text: any[]) {
   console.log(moment().format(), ...text);
 }
 
-export function logError(...text: string[]) {
+export function logError(...text: any[]) {
   console.log(moment().format(), ...text);
 }

@@ -1,7 +1,7 @@
-import data from "./data";
 import parseMessage from "./messageParser";
 import { Request, Response } from "express";
 import { log } from "./utils";
+import { setUserPsid } from "./data";
 const { webhookToken } = require("../config.json");
 
 export function post(req: Request, res: Response) {
@@ -16,7 +16,7 @@ export function post(req: Request, res: Response) {
         message: { text }
       } = entry.messaging[0];
 
-      data.userPsid = id;
+      setUserPsid(id);
       parseMessage(text);
     });
 

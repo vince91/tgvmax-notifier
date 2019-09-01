@@ -1,8 +1,8 @@
 import axios from "axios";
 import * as he from "he";
 import * as moment from "moment";
-import data from "./data";
 import { log } from "./utils";
+import { setDestinations, setOrigins } from "./data";
 
 let axiosInstance = axios.create();
 let token: string;
@@ -36,11 +36,14 @@ async function getToken() {
   log("TGVmax token:", token);
   axiosInstance.defaults.headers.common.ValidityToken = token;
 
-  data.origins = (await axiosInstance(ORIGIN_URL)).data;
-  data.destinations = (await axiosInstance(DESTINATION_URL)).data;
+  const [{ data: origins }, { data: destinations }] = await Promise.all([
+    axiosInstance(ORIGIN_URL),
+    axiosInstance(DESTINATION_URL)
+  ]);
+  await Promise.all([setOrigins(origins), setDestinations(destinations)]);
 
   log(
-    `Found ${data.origins.length} origins and ${data.destinations.length} destinations`
+    `Found ${origins.length} origins and ${destinations.length} destinations`
   );
 }
 

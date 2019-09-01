@@ -1,21 +1,16 @@
-import * as moment from 'moment';
+interface Data {
+  jobs: Job[];
+  lastId: number;
+  userPsid: number;
+  origins: string[];
+  destinations: string[];
+  lastSent: string;
+}
 
-declare global {
-  interface Data {
-    jobs: Job[];
-    lastId: number;
-    userPsid: number;
-    origins: string[];
-    destinations: string[];
-    lastSent: moment.Moment;
-  }
-
-  interface Job {
-    id: number;
-    origin: string;
-    destination: string;
-    date: string;
-    lastChecked: string;
-    checking: boolean;
-  }
+interface Job {
+  id: number;
+  origin: string;
+  destination: string;
+  date: string;
+  lastChecked: string;
 }

@@ -3,3 +3,4 @@ npm-debug.*
 .vscode/
 dist/
 index.js
+data.json
