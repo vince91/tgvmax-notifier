@@ -1,6 +1,7 @@
 import data from "./data";
 import axios from "axios";
 import * as moment from "moment";
+import { logError } from "./utils";
 const { pageAccessToken } = require("../config.json");
 
 const MESSAGE_URL = "https://graph.facebook.com/v4.0/me/messages";
@@ -22,8 +23,8 @@ async function send(text: string, messaging_type: "UPDATE" | "RESPONSE") {
   try {
     await axios.post(url, body);
   } catch ({ response }) {
-    console.error("\nCould not send message:", text);
-    console.error(response.status, response.data);
+    logError("\nCould not send message:", text);
+    logError(response.status, response.data);
   }
 }
 

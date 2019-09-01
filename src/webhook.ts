@@ -1,6 +1,7 @@
 import data from "./data";
 import parseMessage from "./messageParser";
 import { Request, Response } from "express";
+import { log } from "./utils";
 const { webhookToken } = require("../config.json");
 
 export function post(req: Request, res: Response) {
@@ -8,7 +9,7 @@ export function post(req: Request, res: Response) {
 
   if (body.object === "page") {
     body.entry.forEach(function(entry: any) {
-      console.log("\nReceived message:\n", JSON.stringify(entry, null, 2));
+      log("\nReceived message:\n", JSON.stringify(entry, null, 2));
 
       const {
         sender: { id },

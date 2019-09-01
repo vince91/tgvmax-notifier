@@ -2,6 +2,7 @@ import axios from "axios";
 import * as he from "he";
 import * as moment from "moment";
 import data from "./data";
+import { log } from "./utils";
 
 let axiosInstance = axios.create();
 let token: string;
@@ -25,20 +26,20 @@ export function checkToken() {
 }
 
 async function getToken() {
-  console.log("Retrieving TGVmax token...");
+  log("Retrieving TGVmax token...");
 
   const { data: response } = await axios(SIMULATOR_URL);
   const inputs = (response as string).match(/<input(?:.*)\/>/g);
   const tokenInput = inputs.find(input => input.includes("hiddenToken"));
 
   token = he.decode(tokenInput.match(/value="(.*)"/)[1]);
-  console.log("TGVmax token:", token);
+  log("TGVmax token:", token);
   axiosInstance.defaults.headers.common.ValidityToken = token;
 
   data.origins = (await axiosInstance(ORIGIN_URL)).data;
   data.destinations = (await axiosInstance(DESTINATION_URL)).data;
 
-  console.log(
+  log(
     `Found ${data.origins.length} origins and ${data.destinations.length} destinations`
   );
 }

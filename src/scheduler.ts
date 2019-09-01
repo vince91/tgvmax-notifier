@@ -2,7 +2,7 @@ import * as moment from "moment";
 import { sendUpdate } from "./messenger";
 import { getAvailability } from "./sncf";
 import data from "./data";
-import { jobToString } from "./utils";
+import { jobToString, log } from "./utils";
 
 export default function scheduler() {
   // Remove passed jobs
@@ -13,7 +13,7 @@ export default function scheduler() {
   data.jobs.forEach(checkJob);
 
   if (data.jobs.length && data.lastSent && moment(data.lastSent).add(15, 'hour').isBefore()) {
-    console.log('Sending update message to user');
+    log('Sending update message to user');
     sendUpdate('Still searching?');
   }
 }
@@ -31,7 +31,7 @@ async function checkJob(job: Job) {
     job.checking = true;
     const availability = await getAvailability(origin, destination, date);
 
-    console.log(
+    log(
       availability.length ? "✅" : "❌",
       "Checked job: ",
       jobToString(job),

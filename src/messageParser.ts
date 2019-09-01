@@ -2,7 +2,7 @@ import { sendResponse } from "./messenger";
 import * as moment from "moment";
 import * as Fuse from "fuse.js";
 import data from "./data";
-import { jobToString } from "./utils";
+import { jobToString, log } from "./utils";
 
 const CREATE_REGEX = /create (.*)-(.*)(\d\d\/\d\d\/\d\d\d\d)/im;
 const DELETE_REGEX = /delete(?:\s)*(\d*)/im;
@@ -54,7 +54,7 @@ export default function parseMessage(message: string) {
       `🚄 Job #${job.id} created: ${job.origin} > ${job.destination} on ${date}`
     );
 
-    console.log("Added job: " + jobToString(job));
+    log("Added job: " + jobToString(job));
   } else if (DELETE_REGEX.test(message)) {
     const [, id] = DELETE_REGEX.exec(message);
 
