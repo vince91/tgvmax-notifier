@@ -1,10 +1,12 @@
 import axios from "axios";
 import * as he from "he";
 import * as moment from "moment";
+import data from "./data";
 
 let axiosInstance = axios.create();
 let token: string;
 let tokenPromise: Promise<void>;
+let tokenValidUntil: moment.Moment;
 
 const SIMULATOR_URL = "https://simulateur.tgvmax.fr/VSC/";
 const API_URL = "https://sncf-simulateur-api-prod.azurewebsites.net/api";
@@ -13,36 +15,32 @@ const DESTINATION_URL = API_URL + "/Stations/AllDestinations";
 const AVAILABILITY_URL = API_URL + "/RailAvailability/Search";
 const FORMAT = "YYYY-MM-DDTHH:mm:ss";
 
-async function checkToken() {
-  if (tokenPromise) {
-    return tokenPromise;
+export function checkToken() {
+  if (token == null || moment().isAfter(tokenValidUntil)) {
+    tokenValidUntil = moment().add(55, "minute");
+    tokenPromise = getToken();
   }
 
-  if (token == null) {
-    console.log("Retrieving TGVmax token...");
-    return (tokenPromise = getToken());
-  }
+  return tokenPromise;
 }
 
 async function getToken() {
-  const { data } = await axios(SIMULATOR_URL);
-  const inputs = (data as string).match(/<input(?:.*)\/>/g);
+  console.log("Retrieving TGVmax token...");
+
+  const { data: response } = await axios(SIMULATOR_URL);
+  const inputs = (response as string).match(/<input(?:.*)\/>/g);
   const tokenInput = inputs.find(input => input.includes("hiddenToken"));
+
   token = he.decode(tokenInput.match(/value="(.*)"/)[1]);
   console.log("TGVmax token:", token);
   axiosInstance.defaults.headers.common.ValidityToken = token;
-}
 
-export async function getAllOrigins() {
-  await checkToken();
-  const { data } = await axiosInstance(ORIGIN_URL);
-  return data;
-}
+  data.origins = (await axiosInstance(ORIGIN_URL)).data;
+  data.destinations = (await axiosInstance(DESTINATION_URL)).data;
 
-export async function getAllDestinations() {
-  await checkToken();
-  const { data } = await axiosInstance(DESTINATION_URL);
-  return data;
+  console.log(
+    `Found ${data.origins.length} origins and ${data.destinations.length} destinations`
+  );
 }
 
 export async function getAvailability(

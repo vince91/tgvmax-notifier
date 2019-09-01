@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "Vincent Timofti",
   "license": "MIT",
-  "description": "TGVMax Notifier",
+  "description": "TGVmax Notifier",
   "repository": {
     "type": "git",
     "url": "https://github.com/vince91/tgvmax-notifier.git"
